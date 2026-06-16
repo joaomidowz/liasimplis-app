@@ -421,3 +421,45 @@ DeviceHelp helpByKey(String key) => deviceHelpItems.firstWhere(
   (item) => item.key == key,
   orElse: () => deviceHelpItems.first,
 );
+
+const callSteps = <String>[
+  'Abra o aplicativo de telefone (ícone de telefone).',
+  'Toque no teclado numérico.',
+  'Discare o número desejado.',
+  'Toque no botão verde de ligar.',
+  'Espere a pessoa atender.',
+  'Para encerrar, toque no botão vermelho.',
+];
+
+const faqItems = <FaqItem>[
+  FaqItem(
+    question: 'O que é um link?',
+    answer:
+        'Link é um caminho que leva você para outra página. Ele pode ser seguro ou perigoso. Links de desconhecidos devem ser evitados.',
+  ),
+  FaqItem(
+    question: 'Como sei se uma mensagem é golpe?',
+    answer:
+        'Sinais de golpe: pressa para agir, promessa de prêmio, pedido de senha ou dados pessoais, link suspeito e remetente desconhecido.',
+  ),
+  FaqItem(
+    question: 'O que fazer se cliquei em um link suspeito?',
+    answer:
+        'Não informe dados. Feche a página. Troque a senha do banco. Procure ajuda de alguém de confiança ou ligue para o banco.',
+  ),
+  FaqItem(
+    question: 'Posso usar Wi-Fi público para acessar o banco?',
+    answer:
+        'Não é recomendado. Redes públicas podem interceptar seus dados. Use dados móveis ou o Wi-Fi de casa para acessar contas bancárias.',
+  ),
+  FaqItem(
+    question: 'O que fazer se o celular parou de funcionar?',
+    answer:
+        'Tente reiniciar segurando o botão de ligar. Se não resolver, procure ajuda de alguém de confiança ou uma assistência técnica.',
+  ),
+  FaqItem(
+    question: 'Como bloquear um número que está me perturbando?',
+    answer:
+        'Abra a conversa do número, toque nos três pontos ou no ícone de informação e selecione "Bloquear número".',
+  ),
+];

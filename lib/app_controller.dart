@@ -9,15 +9,18 @@ import 'models.dart';
 
 enum AppScreen {
   start,
-  adjust,
   home,
   trainings,
-  trainingStart,
+  trainingIntro,
   simulation,
-  result,
-  dictionary,
+  feedbackWrong,
+  feedbackRight,
+  wordExplanation,
+  reinforcement,
+  reinforcementFeedback,
   conclusion,
-  deviceHelp,
+  dictionary,
+  help,
   favorites,
 }
 
@@ -46,6 +49,7 @@ class AppController extends ChangeNotifier {
   int protectedChoices = 0;
   String lastTraining = trainings.first.name;
   final Set<String> favoriteTerms = {};
+  final List<Map<String, String>> savedItems = [];
 
   Future<void> load() async {
     _preferences ??= await SharedPreferences.getInstance();
@@ -73,7 +77,7 @@ class AppController extends ChangeNotifier {
           (data['favoriteTerms'] as List<dynamic>? ?? const [])
               .whereType<String>(),
         );
-      screen = AppScreen.home;
+      screen = name.trim().isEmpty ? AppScreen.start : AppScreen.home;
       notifyListeners();
     } on FormatException {
       await _preferences?.remove(storageKey);
@@ -129,12 +133,19 @@ class AppController extends ChangeNotifier {
     _changed();
   }
 
+  void completeOnboarding(String userName, String brand) {
+    name = userName.trim();
+    deviceBrand = brand;
+    screen = AppScreen.home;
+    _changed();
+  }
+
   void startTraining(String name) {
     selectedTraining = name;
     lastTraining = name;
     currentScenarioId =
         training.scenarios[_random.nextInt(training.scenarios.length)].id;
-    screen = AppScreen.trainingStart;
+    screen = AppScreen.trainingIntro;
     _changed();
   }
 
@@ -162,7 +173,43 @@ class AppController extends ChangeNotifier {
     completed += 1;
     if (answer.type != AnswerType.risky) protectedChoices += 1;
     lastTraining = selectedTraining;
-    screen = AppScreen.result;
+    screen = answer.type == AnswerType.risky
+        ? AppScreen.feedbackWrong
+        : AppScreen.feedbackRight;
+    _changed();
+  }
+
+  void tryAgain() {
+    chooseAnotherScenario();
+  }
+
+  void showExplanation() {
+    activeTerm = 'link';
+    screen = AppScreen.wordExplanation;
+    _changed();
+  }
+
+  void continueFromWord() {
+    final candidates = training.scenarios
+        .where((item) => item.id != currentScenarioId)
+        .toList();
+    if (candidates.isNotEmpty) {
+      currentScenarioId = candidates[_random.nextInt(candidates.length)].id;
+    }
+    screen = AppScreen.reinforcement;
+    _changed();
+  }
+
+  void selectReinforcementAnswer(ScenarioAnswer answer) {
+    selectedAnswer = answer.type;
+    selectedAnswerLabel = answer.label;
+    if (answer.type != AnswerType.risky) protectedChoices += 1;
+    screen = AppScreen.reinforcementFeedback;
+    _changed();
+  }
+
+  void finishTraining() {
+    screen = AppScreen.conclusion;
     _changed();
   }
 
@@ -189,15 +236,29 @@ class AppController extends ChangeNotifier {
     _changed();
   }
 
+  void saveItem(String type, String text) {
+    final key = '$type:$text';
+    if (!savedItems.any((item) => '${item['type']}:${item['text']}' == key)) {
+      savedItems.add({'type': type, 'text': text});
+      _changed();
+    }
+  }
+
+  bool isItemSaved(String type, String text) {
+    return savedItems.any(
+      (item) => item['type'] == type && item['text'] == text,
+    );
+  }
+
   String speechText() => switch (screen) {
     AppScreen.simulation =>
       '${scenario.title}. ${scenario.message}. Sinal de atenção: ${scenario.clue}.',
-    AppScreen.result =>
-      '${resultTitle(selectedAnswer)}. ${scenario.safeAction}',
+    AppScreen.feedbackRight =>
+      'Boa escolha. ${scenario.safeAction}',
+    AppScreen.feedbackWrong =>
+      'Atenção. ${scenario.safeAction}',
     AppScreen.dictionary => '${term.title}. ${term.description}. ${term.alert}',
-    AppScreen.deviceHelp =>
-      '${help.title}. ${(help.steps[deviceBrand] ?? help.steps['Detectado']!).join(' ')}',
-    _ => 'LiaSimplis. Aprenda e treine com segurança.',
+    _ => 'Lia Simplis. Aprenda e treine com segurança.',
   };
 
   String resultTitle(AnswerType type) => switch (type) {
