@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>UI Style Guide - Lia Simplis</title>
+  <style>
+    @page { size: A4; margin: 1.7cm; }
+    body {
+      font-family: Inter, Arial, sans-serif;
+      color: #1A1A1A;
+      background: #FFFFFF;
+      line-height: 1.45;
+      font-size: 11pt;
+    }
+    h1 {
+      color: #1A4D3A;
+      font-size: 26pt;
+      margin: 0 0 4px;
+      font-weight: 800;
+    }
+    h2 {
+      color: #1A4D3A;
+      font-size: 18pt;
+      margin: 26px 0 10px;
+      border-bottom: 2px solid #D4EDDF;
+      padding-bottom: 5px;
+    }
+    h3 {
+      color: #333330;
+      font-size: 13pt;
+      margin: 16px 0 8px;
+    }
+    p { margin: 6px 0 10px; }
+    .subtitle {
+      color: #666660;
+      font-size: 12pt;
+      margin-bottom: 18px;
+    }
+    .cover {
+      background: #F5F3EF;
+      border-left: 10px solid #1A4D3A;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      background: #E8F5EE;
+      color: #1A4D3A;
+      border: 1px solid #D4EDDF;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 10pt;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0 16px;
+    }
+    th {
+      background: #1A4D3A;
+      color: #FFFFFF;
+      text-align: left;
+      padding: 8px;
+      font-weight: 700;
+      border: 1px solid #1A4D3A;
+    }
+    td {
+      border: 1px solid #D4D4CE;
+      padding: 8px;
+      vertical-align: top;
+    }
+    .swatch {
+      width: 100%;
+      height: 34px;
+      border: 1px solid #D4D4CE;
+      border-radius: 8px;
+    }
+    .primary { background: #1A4D3A; }
+    .secondary { background: #F5F3EF; }
+    .support-green { background: #2D7A5A; }
+    .support-amber { background: #F9C74F; }
+    .support-blue { background: #1A3D5C; }
+    .usage-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0 18px;
+    }
+    .panel {
+      border: 1px solid #D4D4CE;
+      border-radius: 14px;
+      padding: 14px;
+      background: #FFFFFF;
+      margin-bottom: 10px;
+    }
+    .panel.soft { background: #F5F3EF; }
+    .button {
+      display: inline-block;
+      border-radius: 18px;
+      padding: 12px 20px;
+      font-weight: 800;
+      margin: 4px 8px 8px 0;
+    }
+    .button.primary {
+      background: #1A4D3A;
+      color: #FFFFFF;
+      border: 2px solid #1A4D3A;
+    }
+    .button.hover {
+      background: #2D7A5A;
+      color: #FFFFFF;
+      border: 2px solid #2D7A5A;
+    }
+    .button.outline {
+      background: #FFFFFF;
+      color: #1A4D3A;
+      border: 2px solid #1A4D3A;
+    }
+    .input {
+      border: 1.5px solid #E8E4DC;
+      border-radius: 14px;
+      padding: 11px 14px;
+      background: #FFFFFF;
+      color: #666660;
+      margin: 4px 0;
+    }
+    .input.focus {
+      border: 2px solid #1A4D3A;
+      color: #1A1A1A;
+    }
+    .card-demo {
+      border: 1.5px solid #E8E4DC;
+      border-radius: 18px;
+      padding: 14px;
+      background: #FFFFFF;
+      margin-top: 6px;
+    }
+    .nav-demo {
+      border-top: 1.5px solid #E8E4DC;
+      background: #FFFFFF;
+      padding: 8px 4px;
+      color: #888880;
+      text-align: center;
+    }
+    .nav-active {
+      display: inline-block;
+      background: #E8F5EE;
+      color: #1A4D3A;
+      border-radius: 14px;
+      padding: 7px 10px;
+      font-weight: 700;
+    }
+    .icon-row span {
+      display: inline-block;
+      min-width: 92px;
+      text-align: center;
+      border: 1px solid #D4D4CE;
+      border-radius: 12px;
+      padding: 10px 6px;
+      margin: 4px;
+      background: #FFFFFF;
+      color: #1A4D3A;
+      font-weight: 700;
+    }
+    .icon-symbol {
+      display: block;
+      font-size: 18pt;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .type-title { font-size: 24pt; font-weight: 800; color: #1A1A1A; }
+    .type-subtitle { font-size: 18pt; font-weight: 700; color: #333330; }
+    .type-body { font-size: 12pt; font-weight: 400; color: #333330; }
+    .type-caption { font-size: 10pt; font-weight: 500; color: #666660; }
+    .note {
+      background: #FEF6E4;
+      border: 1.5px solid #F9C74F;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #7B4F00;
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <span class="badge">Projeto final - UI Style Guide</span>
+    <h1>Lia Simplis</h1>
+    <p class="subtitle">Guia de estilo de interface para um aplicativo educativo e acessivel sobre seguranca digital.</p>
+    <p>Este documento define as regras visuais que devem orientar telas, fluxos, componentes e futuras evolucoes do projeto Lia Simplis.</p>
+  </section>
+
+  <h2>1. Identidade visual</h2>
+  <p>O Lia Simplis usa uma linguagem visual calma, didatica e confiavel. O verde comunica seguranca e acolhimento; o creme reduz a sensacao de interface tecnica; e as cores de apoio ajudam a destacar avisos, ajuda e progresso.</p>
+
+  <h2>2. Cores principais e regra 60/30/10</h2>
+  <table>
+    <tr>
+      <th style="width: 18%;">Cor</th>
+      <th style="width: 18%;">Hex</th>
+      <th style="width: 18%;">Peso</th>
+      <th>Aplicacao</th>
+    </tr>
+    <tr>
+      <td><div class="swatch primary"></div>Verde seguranca</td>
+      <td>#1A4D3A</td>
+      <td>60% primaria</td>
+      <td>Cabecalhos, botoes principais, icones ativos, barras de destaque e chamadas para acao.</td>
+    </tr>
+    <tr>
+      <td><div class="swatch secondary"></div>Creme acolhimento</td>
+      <td>#F5F3EF</td>
+      <td>30% secundaria</td>
+      <td>Fundos de tela, areas de respiro, secoes neutras e superficies de baixa atencao.</td>
+    </tr>
+    <tr>
+      <td><div class="swatch support-green"></div>Verde medio</td>
+      <td>#2D7A5A</td>
+      <td>10% complementar</td>
+      <td>Hover, gradientes, progresso positivo e variacoes de acao principal.</td>
+    </tr>
+    <tr>
+      <td><div class="swatch support-amber"></div>Amarelo alerta</td>
+      <td>#F9C74F</td>
+      <td>10% complementar</td>
+      <td>Avisos, dicas, atencao moderada e informacoes de cuidado.</td>
+    </tr>
+    <tr>
+      <td><div class="swatch support-blue"></div>Azul ajuda</td>
+      <td>#1A3D5C</td>
+      <td>10% complementar</td>
+      <td>Conteudos de ajuda, suporte, explicacoes e caminhos informativos.</td>
+    </tr>
+  </table>
+
+  <h3>Exemplos de uso</h3>
+  <div class="panel soft">
+    Fundo principal: creme #F5F3EF. Cards internos: branco #FFFFFF. Texto principal: #1A1A1A. Texto auxiliar: #666660.
+  </div>
+  <div class="panel">
+    <span class="button primary">Comecar treino</span>
+    <span class="button hover">Hover / pressionado</span>
+    <span class="button outline">Ver detalhes</span>
+  </div>
+  <p class="note">Regra pratica: evitar telas dominadas por amarelo, azul ou vermelho. Essas cores devem aparecer apenas para orientar a leitura ou indicar estado.</p>
+
+  <h2>3. Iconografia</h2>
+  <p>Estilo recomendado: icones Material minimalistas em linha, com traco simples, cantos suaves e preenchimento apenas quando houver estado selecionado. Os icones devem ter tamanho padrao de 22 a 28 px e cor verde escuro quando ativos.</p>
+  <div class="icon-row">
+    <span><b class="icon-symbol">⌂</b>Inicio</span>
+    <span><b class="icon-symbol">□</b>Treino</span>
+    <span><b class="icon-symbol">?</b>Ajuda</span>
+    <span><b class="icon-symbol">▤</b>Dicionario</span>
+    <span><b class="icon-symbol">♡</b>Salvos</span>
+  </div>
+  <table>
+    <tr><th>Icone no Flutter</th><th>Uso</th><th>Regra visual</th></tr>
+    <tr><td>Icons.home</td><td>Acesso a tela inicial.</td><td>Ativo com fundo #E8F5EE e texto #1A4D3A.</td></tr>
+    <tr><td>Icons.shield_outlined</td><td>Treinos e protecao digital.</td><td>Usar em cards de seguranca e chamadas principais.</td></tr>
+    <tr><td>Icons.help_outline</td><td>Ajuda e duvidas frequentes.</td><td>Associar ao azul de apoio quando for conteudo informativo.</td></tr>
+    <tr><td>Icons.menu_book_outlined</td><td>Dicionario e conteudo educativo.</td><td>Pode receber amarelo claro de fundo para destacar aprendizado.</td></tr>
+    <tr><td>Icons.bookmark_outline</td><td>Itens salvos ou favoritos.</td><td>Usar contorno no estado normal e preenchido no estado salvo.</td></tr>
+  </table>
+
+  <h2>4. Componentes principais</h2>
+  <h3>Botoes</h3>
+  <div class="panel">
+    <span class="button primary">Normal</span>
+    <span class="button hover">Hover</span>
+    <span class="button outline">Secundario</span>
+    <p>Altura minima: 52 px. Raio: 18 px. Texto em negrito para reforcar clareza e acessibilidade.</p>
+  </div>
+
+  <h3>Campos de formulario</h3>
+  <div class="panel">
+    <div class="input">Digite uma palavra ou pergunta</div>
+    <div class="input focus">Campo em foco</div>
+    <p>O estado normal usa borda cinza clara; o foco usa borda verde escuro para indicar interacao ativa.</p>
+  </div>
+
+  <h3>Cards</h3>
+  <div class="card-demo">
+    <strong>Aprenda a identificar golpes</strong>
+    <p>Card branco com borda cinza clara, raio de 18 px e texto direto. Deve agrupar uma acao ou informacao por vez.</p>
+  </div>
+  <div class="card-demo" style="border-color:#D4EDDF; background:#F0F7F4;">
+    <strong>Estado destacado</strong>
+    <p>Para dicas, progresso ou informacoes positivas, usar fundo verde palido e borda verde clara.</p>
+  </div>
+
+  <h3>Barra de navegacao</h3>
+  <div class="nav-demo">
+    <span class="nav-active">Inicio</span>
+    &nbsp;&nbsp; Treino &nbsp;&nbsp; Ajuda &nbsp;&nbsp; Dicionario &nbsp;&nbsp; Salvos
+  </div>
+  <p>A navegacao inferior deve manter fundo branco, borda superior cinza e item ativo com fundo verde claro.</p>
+
+  <h2>5. Tipografia</h2>
+  <p>Fonte principal: Inter. Caso a fonte nao esteja disponivel, usar Arial como alternativa. A tipografia deve priorizar leitura rapida, boa legibilidade e textos objetivos.</p>
+  <table>
+    <tr><th>Hierarquia</th><th>Estilo</th><th>Uso</th></tr>
+    <tr><td><span class="type-title">Titulo</span></td><td>24 pt / peso 800</td><td>Nome de tela, conclusao de fluxo e mensagem principal.</td></tr>
+    <tr><td><span class="type-subtitle">Subtitulo</span></td><td>18 pt / peso 700</td><td>Secoes internas, cards importantes e passos de treino.</td></tr>
+    <tr><td><span class="type-body">Texto</span></td><td>12 pt / peso 400</td><td>Explicacoes, instrucoes e conteudo didatico.</td></tr>
+    <tr><td><span class="type-caption">Legenda</span></td><td>10 pt / peso 500</td><td>Ajuda contextual, observacoes, rotulos e metadados.</td></tr>
+  </table>
+
+  <h2>6. Resumo de aplicacao</h2>
+  <table>
+    <tr><th>Elemento</th><th>Regra</th></tr>
+    <tr><td>Fundo</td><td>Usar #F5F3EF em telas principais e #FFFFFF para cards.</td></tr>
+    <tr><td>Acao principal</td><td>Botao preenchido em #1A4D3A com texto branco.</td></tr>
+    <tr><td>Estado hover</td><td>Usar #2D7A5A em botoes e elementos interativos.</td></tr>
+    <tr><td>Alertas</td><td>Usar amarelo para atencao moderada e vermelho apenas para erro ou risco real.</td></tr>
+    <tr><td>Icones</td><td>Preferir contorno minimalista; ativo em verde escuro; inativo em cinza.</td></tr>
+    <tr><td>Texto</td><td>Priorizar contraste alto, frases curtas e linguagem simples.</td></tr>
+  </table>
+</body>
+</html>

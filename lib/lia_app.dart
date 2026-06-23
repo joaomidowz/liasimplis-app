@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 
 import 'app_controller.dart';
 import 'app_data.dart';
@@ -98,7 +97,6 @@ class LiaShell extends StatefulWidget {
 
 class _LiaShellState extends State<LiaShell> {
   final FlutterTts _tts = FlutterTts();
-  final SpeechToText _speech = SpeechToText();
 
   AppController get controller => widget.controller;
 
@@ -124,7 +122,6 @@ class _LiaShellState extends State<LiaShell> {
   @override
   void dispose() {
     _tts.stop();
-    _speech.stop();
     super.dispose();
   }
 
@@ -142,12 +139,6 @@ class _LiaShellState extends State<LiaShell> {
                   tooltip: 'Ouvir esta tela',
                   onPressed: _speak,
                   icon: const Icon(Icons.volume_up_outlined),
-                ),
-                IconButton(
-                  key: const Key('voice-button'),
-                  tooltip: 'Comando de voz',
-                  onPressed: _listen,
-                  icon: const Icon(Icons.mic_none),
                 ),
                 IconButton(
                   key: const Key('text-size-button'),
@@ -173,9 +164,11 @@ class _LiaShellState extends State<LiaShell> {
     AppScreen.feedbackRight => FeedbackRightScreen(controller: controller),
     AppScreen.wordExplanation => WordExplanationScreen(controller: controller),
     AppScreen.reinforcement => ReinforcementScreen(controller: controller),
-    AppScreen.reinforcementFeedback =>
-      ReinforcementFeedbackScreen(controller: controller),
+    AppScreen.reinforcementFeedback => ReinforcementFeedbackScreen(
+      controller: controller,
+    ),
     AppScreen.conclusion => ConclusionScreen(controller: controller),
+    AppScreen.quiz => QuizScreen(controller: controller),
     AppScreen.dictionary => DictionaryScreen(controller: controller),
     AppScreen.help => HelpScreen(controller: controller),
     AppScreen.favorites => FavoritesScreen(controller: controller),
@@ -186,7 +179,7 @@ class _LiaShellState extends State<LiaShell> {
       (AppScreen.home, Icons.home, 'Início'),
       (AppScreen.trainings, Icons.shield_outlined, 'Treino'),
       (AppScreen.help, Icons.help_outline, 'Ajuda'),
-      (AppScreen.dictionary, Icons.menu_book_outlined, 'Dicionário'),
+      (AppScreen.dictionary, Icons.menu_book_outlined, 'Termos'),
       (AppScreen.favorites, Icons.bookmark_outline, 'Salvos'),
     ];
     final currentIndex = destinations.indexWhere(
@@ -195,7 +188,9 @@ class _LiaShellState extends State<LiaShell> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(top: BorderSide(color: LiaColors.borderGray, width: 1.5)),
+        border: const Border(
+          top: BorderSide(color: LiaColors.borderGray, width: 1.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -232,39 +227,6 @@ class _LiaShellState extends State<LiaShell> {
     } catch (_) {
       _message('Leitura em voz alta indisponível neste aparelho.');
     }
-  }
-
-  Future<void> _listen() async {
-    final available = await _speech.initialize();
-    if (!available) {
-      _message('Comando de voz indisponível ou sem permissão.');
-      return;
-    }
-    await _speech.listen(
-      listenOptions: SpeechListenOptions(
-        localeId: 'pt_BR',
-        listenFor: const Duration(seconds: 6),
-      ),
-      onResult: (result) {
-        if (!result.finalResult) return;
-        final text = result.recognizedWords.toLowerCase();
-        if (text.contains('treino')) {
-          controller.go(AppScreen.trainings);
-        } else if (text.contains('ajuda')) {
-          controller.go(AppScreen.help);
-        } else if (text.contains('dicionário') || text.contains('dicionario')) {
-          controller.go(AppScreen.dictionary);
-        } else if (text.contains('salvo') || text.contains('favorito')) {
-          controller.go(AppScreen.favorites);
-        } else if (text.contains('início') || text.contains('inicio')) {
-          controller.go(AppScreen.home);
-        } else {
-          _message(
-            'Comando não reconhecido. Diga início, treino, ajuda, dicionário ou salvos.',
-          );
-        }
-      },
-    );
   }
 
   void _message(String text) {
@@ -556,6 +518,8 @@ class HomeScreen extends StatelessWidget {
               _HeroCard(onStart: () => controller.go(AppScreen.trainings)),
               const SizedBox(height: 16),
               const _DescriptionCard(),
+              const SizedBox(height: 16),
+              _ProgressSummary(controller: controller),
               const SizedBox(height: 24),
               Text(
                 'ACESSO RÁPIDO',
@@ -593,9 +557,111 @@ class HomeScreen extends StatelessWidget {
                 description: 'Ligar, problemas e perguntas frequentes.',
                 onTap: () => controller.go(AppScreen.help),
               ),
+              const SizedBox(height: 10),
+              _QuickAccessCard(
+                icon: Icons.quiz_outlined,
+                iconBg: LiaColors.greenLight,
+                iconColor: LiaColors.greenDark,
+                label: 'Teste educativo',
+                description: 'Responda perguntas rápidas e revise dicas.',
+                onTap: controller.startQuiz,
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProgressSummary extends StatelessWidget {
+  const _ProgressSummary({required this.controller});
+  final AppController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(LiaRadii.xl),
+        border: Border.all(color: LiaColors.borderGray, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Seu progresso',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: LiaColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Último módulo: ${controller.lastModule}',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: LiaColors.textMuted,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InfoPill(
+                icon: Icons.flag_outlined,
+                text: '${controller.completedTrainings.length} treinos',
+              ),
+              _InfoPill(
+                icon: Icons.bookmark_outline,
+                text: '${controller.favoriteTerms.length} termos salvos',
+              ),
+              _InfoPill(
+                icon: Icons.check_circle_outline,
+                text:
+                    '${controller.quizCorrect}/${quizQuestions.length} acertos',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: LiaColors.greenPale,
+        borderRadius: BorderRadius.circular(LiaRadii.md),
+        border: Border.all(color: LiaColors.greenBorder, width: 1.2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: LiaColors.greenDark),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: LiaColors.greenDark,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -836,6 +902,7 @@ class TrainingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _TrainingCard(
                     training: training,
+                    selected: controller.lastTraining == training.name,
                     onTap: () => controller.startTraining(training.name),
                   ),
                 ),
@@ -848,88 +915,156 @@ class TrainingsScreen extends StatelessWidget {
 }
 
 class _TrainingCard extends StatelessWidget {
-  const _TrainingCard({required this.training, required this.onTap});
+  const _TrainingCard({
+    required this.training,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final Training training;
   final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(LiaRadii.lg),
-          border: Border.all(color: LiaColors.borderGray, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: LiaColors.greenLight,
-                borderRadius: BorderRadius.circular(LiaRadii.md),
-              ),
-              child: Icon(
-                training.name.startsWith('Mensagem')
-                    ? Icons.chat_outlined
-                    : Icons.payments_outlined,
-                color: LiaColors.greenDark,
-                size: 28,
-              ),
+    return Semantics(
+      button: true,
+      selected: selected,
+      label:
+          '${training.name}. ${training.category}. ${training.difficulty}. ${training.minutes}. ${training.scenarios.length} casos.',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(LiaRadii.lg),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: selected ? LiaColors.greenPale : Colors.white,
+            borderRadius: BorderRadius.circular(LiaRadii.lg),
+            border: Border.all(
+              color: selected ? LiaColors.greenDark : LiaColors.borderGray,
+              width: selected ? 2 : 1.5,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: LiaColors.greenLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      training.tag,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: LiaColors.greenDark,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: LiaColors.greenLight,
+                  borderRadius: BorderRadius.circular(LiaRadii.md),
+                ),
+                child: Icon(
+                  _trainingIcon(training.category),
+                  color: LiaColors.greenDark,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: LiaColors.greenLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        training.tag,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: LiaColors.greenDark,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    training.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: LiaColors.textDark,
+                    const SizedBox(height: 6),
+                    Text(
+                      training.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: LiaColors.textDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${training.minutes} · ${training.scenarios.length} casos',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: LiaColors.textMuted,
+                    const SizedBox(height: 2),
+                    Text(
+                      training.subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: LiaColors.textMuted,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _TinyMeta(text: training.category),
+                        _TinyMeta(text: training.difficulty),
+                        _TinyMeta(
+                          text:
+                              '${training.minutes} · ${training.scenarios.length} casos',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      training.safetyNotice,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: LiaColors.textMuted,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.chevron_right,
-              color: LiaColors.textLightGray,
-              size: 22,
-            ),
-          ],
+              const Icon(
+                Icons.chevron_right,
+                color: LiaColors.textLightGray,
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _trainingIcon(String category) => switch (category) {
+    'Banco digital' => Icons.payments_outlined,
+    'WhatsApp' => Icons.chat_outlined,
+    'Celular' => Icons.phone_android,
+    _ => Icons.shield_outlined,
+  };
+}
+
+class _TinyMeta extends StatelessWidget {
+  const _TinyMeta({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: LiaColors.chatGray,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: LiaColors.chatBorder),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: LiaColors.textMedium,
         ),
       ),
     );
@@ -982,8 +1117,22 @@ class TrainingIntroScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _TinyMeta(text: controller.training.category),
+                    _TinyMeta(text: controller.training.difficulty),
+                    _TinyMeta(text: controller.training.minutes),
+                    _TinyMeta(
+                      text: '${controller.training.scenarios.length} casos',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  'Aprenda a identificar situações de risco e tome decisões seguras.',
+                  controller.training.subtitle,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 16,
@@ -1011,7 +1160,7 @@ class TrainingIntroScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Fique tranquilo. Você pode errar sem problema. Nada será enviado, comprado ou apagado.',
+                          '${controller.training.safetyNotice} Você pode errar sem problema e tentar novamente.',
                           style: GoogleFonts.inter(
                             fontSize: 15,
                             color: LiaColors.amberText,
@@ -1420,7 +1569,10 @@ class FeedbackWrongScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: LiaColors.greenPale,
                     borderRadius: BorderRadius.circular(LiaRadii.lg),
-                    border: Border.all(color: LiaColors.greenBorder, width: 1.5),
+                    border: Border.all(
+                      color: LiaColors.greenBorder,
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1471,11 +1623,7 @@ class _InfoItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.warning_amber,
-            color: LiaColors.amberDark,
-            size: 20,
-          ),
+          const Icon(Icons.warning_amber, color: LiaColors.amberDark, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1569,21 +1717,13 @@ class _FeedbackRightScreenState extends State<FeedbackRightScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _ChecklistItem(
-                  text: 'Não clique em links desconhecidos.',
-                ),
+                _ChecklistItem(text: 'Não clique em links desconhecidos.'),
                 const SizedBox(height: 10),
-                _ChecklistItem(
-                  text: 'Não envie senha, CPF ou código.',
-                ),
+                _ChecklistItem(text: 'Não envie senha, CPF ou código.'),
                 const SizedBox(height: 10),
-                _ChecklistItem(
-                  text: 'Desconfie de mensagens com pressa.',
-                ),
+                _ChecklistItem(text: 'Desconfie de mensagens com pressa.'),
                 const SizedBox(height: 10),
-                _ChecklistItem(
-                  text: 'Procure canais oficiais.',
-                ),
+                _ChecklistItem(text: 'Procure canais oficiais.'),
                 const SizedBox(height: 32),
                 FilledButton(
                   onPressed: widget.controller.continueFromWord,
@@ -1743,7 +1883,10 @@ class _WordExplanationScreenState extends State<WordExplanationScreen> {
                   decoration: BoxDecoration(
                     color: LiaColors.greenPale,
                     borderRadius: BorderRadius.circular(LiaRadii.lg),
-                    border: Border.all(color: LiaColors.greenBorder, width: 1.5),
+                    border: Border.all(
+                      color: LiaColors.greenBorder,
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1887,8 +2030,7 @@ class ReinforcementScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _AnswerOption(
                       label: answer.label,
-                      onTap: () =>
-                          controller.selectReinforcementAnswer(answer),
+                      onTap: () => controller.selectReinforcementAnswer(answer),
                     ),
                   ),
               ],
@@ -2085,21 +2227,16 @@ class _ConclusionScreenState extends State<ConclusionScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _ChecklistItem(
-                  text: 'Você identificou um link suspeito.',
-                ),
+                _ChecklistItem(text: 'Você identificou um link suspeito.'),
                 const SizedBox(height: 10),
-                _ChecklistItem(
-                  text: 'Você aprendeu o que é link.',
-                ),
+                _ChecklistItem(text: 'Você aprendeu o que é link.'),
                 const SizedBox(height: 10),
                 _ChecklistItem(
                   text: 'Você reconheceu que senha não deve ser enviada.',
                 ),
                 const SizedBox(height: 32),
                 FilledButton(
-                  onPressed: () =>
-                      widget.controller.go(AppScreen.home),
+                  onPressed: () => widget.controller.go(AppScreen.home),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -2134,18 +2271,13 @@ class _ConclusionScreenState extends State<ConclusionScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () =>
-                      widget.controller.startTraining(
-                        widget.controller.selectedTraining,
-                      ),
+                  onPressed: () => widget.controller.startTraining(
+                    widget.controller.selectedTraining,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.refresh,
-                        size: 20,
-                        color: LiaColors.textMuted,
-                      ),
+                      Icon(Icons.refresh, size: 20, color: LiaColors.textMuted),
                       const SizedBox(width: 10),
                       Text(
                         'Treinar novamente',
@@ -2191,27 +2323,52 @@ class DictionaryScreen extends StatelessWidget {
                   color: LiaColors.textDark,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                '${dictionaryTerms.length} termos em linguagem simples. Toque em um termo para revisar.',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: LiaColors.textMuted,
+                  height: 1.45,
+                ),
+              ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
+              DropdownButtonFormField<String>(
+                initialValue: term.key,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Escolha um termo',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(color: LiaColors.borderGray),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(
+                      color: LiaColors.borderGray,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(
+                      color: LiaColors.greenDark,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                items: [
                   for (final item in dictionaryTerms)
-                    ChoiceChip(
-                      label: Text(item.title),
-                      selected: item.key == term.key,
-                      onSelected: (_) => controller.selectTerm(item.key),
-                      selectedColor: LiaColors.greenLight,
-                      labelStyle: GoogleFonts.inter(
-                        fontWeight: item.key == term.key
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: item.key == term.key
-                            ? LiaColors.greenDark
-                            : LiaColors.textMedium,
-                      ),
+                    DropdownMenuItem(
+                      value: item.key,
+                      child: Text(item.title, overflow: TextOverflow.ellipsis),
                     ),
                 ],
+                onChanged: (value) {
+                  if (value != null) controller.selectTerm(value);
+                },
               ),
               const SizedBox(height: 20),
               Container(
@@ -2233,6 +2390,8 @@ class DictionaryScreen extends StatelessWidget {
                         color: LiaColors.textDark,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    _TinyMeta(text: term.category),
                     const SizedBox(height: 14),
                     Text(
                       term.description,
@@ -2260,6 +2419,24 @@ class DictionaryScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: LiaColors.blueLight,
+                        borderRadius: BorderRadius.circular(LiaRadii.md),
+                      ),
+                      child: Text(
+                        'Dica: ${term.tip}',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: LiaColors.blueDark,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     Text(
                       term.alert,
                       style: GoogleFonts.inter(
@@ -2268,6 +2445,17 @@ class DictionaryScreen extends StatelessWidget {
                         color: LiaColors.redDark,
                       ),
                     ),
+                    if (term.related.isNotEmpty || term.tags.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final item in [...term.related, ...term.tags])
+                            _TinyMeta(text: item),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -2349,7 +2537,7 @@ class _HelpScreenState extends State<HelpScreen> {
                           ),
                         ),
                         Text(
-                          'Encontre ajuda para o seu celular.',
+                          '${deviceHelpItems.length} problemas comuns e perguntas frequentes.',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             color: LiaColors.textMuted,
@@ -2390,12 +2578,15 @@ class _HelpScreenState extends State<HelpScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          'Fazer uma ligação',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: LiaColors.textDark,
+                        Expanded(
+                          child: Text(
+                            'Fazer uma ligação',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: LiaColors.textDark,
+                              height: 1.25,
+                            ),
                           ),
                         ),
                       ],
@@ -2453,26 +2644,42 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
+              DropdownButtonFormField<String>(
+                initialValue: help.key,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Escolha o problema',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(color: LiaColors.borderGray),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(
+                      color: LiaColors.borderGray,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(LiaRadii.lg),
+                    borderSide: const BorderSide(
+                      color: LiaColors.greenDark,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                items: [
                   for (final item in deviceHelpItems)
-                    ChoiceChip(
-                      label: Text(item.title),
-                      selected: item.key == help.key,
-                      onSelected: (_) => widget.controller.selectHelp(item.key),
-                      selectedColor: LiaColors.greenLight,
-                      labelStyle: GoogleFonts.inter(
-                        fontWeight: item.key == help.key
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: item.key == help.key
-                            ? LiaColors.greenDark
-                            : LiaColors.textMedium,
-                      ),
+                    DropdownMenuItem(
+                      value: item.key,
+                      child: Text(item.title, overflow: TextOverflow.ellipsis),
                     ),
                 ],
+                onChanged: (value) {
+                  if (value != null) widget.controller.selectHelp(value);
+                },
               ),
               const SizedBox(height: 16),
               Container(
@@ -2494,6 +2701,8 @@ class _HelpScreenState extends State<HelpScreen> {
                         color: LiaColors.textDark,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    _TinyMeta(text: help.category),
                     const SizedBox(height: 14),
                     for (var i = 0; i < steps.length; i++)
                       Padding(
@@ -2533,6 +2742,44 @@ class _HelpScreenState extends State<HelpScreen> {
                           ],
                         ),
                       ),
+                    if (help.alert.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: LiaColors.redLight,
+                          borderRadius: BorderRadius.circular(LiaRadii.md),
+                          border: Border.all(color: LiaColors.redBorder),
+                        ),
+                        child: Text(
+                          help.alert,
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: LiaColors.redDark,
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: LiaColors.blueLight,
+                        borderRadius: BorderRadius.circular(LiaRadii.md),
+                      ),
+                      child: Text(
+                        'Quando pedir ajuda: ${help.whenToAskHelp}',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          color: LiaColors.blueDark,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2544,7 +2791,10 @@ class _HelpScreenState extends State<HelpScreen> {
                   decoration: BoxDecoration(
                     color: LiaColors.greenPale,
                     borderRadius: BorderRadius.circular(LiaRadii.xl),
-                    border: Border.all(color: LiaColors.greenBorder, width: 1.5),
+                    border: Border.all(
+                      color: LiaColors.greenBorder,
+                      width: 1.5,
+                    ),
                   ),
                   child: Center(
                     child: Column(
@@ -2684,6 +2934,265 @@ class _FaqCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Quiz Screen ─────────────────────────────────────────────────────────────
+
+class QuizScreen extends StatelessWidget {
+  const QuizScreen({super.key, required this.controller});
+  final AppController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final question = controller.quizQuestion;
+    final answered = controller.lastQuizAnswerId != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: LiaColors.greenLight,
+                      borderRadius: BorderRadius.circular(LiaRadii.md),
+                    ),
+                    child: const Icon(
+                      Icons.quiz_outlined,
+                      color: LiaColors.greenDark,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Teste educativo',
+                          style: GoogleFonts.inter(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: LiaColors.textDark,
+                          ),
+                        ),
+                        Text(
+                          '${controller.answeredQuestions.length}/${quizQuestions.length} respondidas',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: LiaColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              LinearProgressIndicator(
+                value: controller.quizProgress,
+                minHeight: 8,
+                backgroundColor: LiaColors.borderGray,
+                color: LiaColors.greenDark,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(LiaRadii.xl),
+                  border: Border.all(color: LiaColors.borderGray, width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _TinyMeta(text: question.category),
+                        _TinyMeta(text: question.level),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      question.question,
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: LiaColors.textDark,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    for (final option in question.alternatives)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _QuizOption(
+                          text: option.text,
+                          selected: controller.lastQuizAnswerId == option.id,
+                          correct:
+                              answered && option.id == question.correctAnswerId,
+                          disabled: answered,
+                          onTap: () => controller.answerQuiz(option.id),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (answered) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: controller.lastQuizWasCorrect == true
+                        ? LiaColors.greenSuccessLight
+                        : LiaColors.amberLight,
+                    borderRadius: BorderRadius.circular(LiaRadii.xl),
+                    border: Border.all(
+                      color: controller.lastQuizWasCorrect == true
+                          ? LiaColors.greenSuccessAccent
+                          : LiaColors.amber,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        controller.lastQuizWasCorrect == true
+                            ? Icons.check_circle_outline
+                            : Icons.info_outline,
+                        color: controller.lastQuizWasCorrect == true
+                            ? LiaColors.greenSuccess
+                            : LiaColors.amberDark,
+                        size: 26,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          controller.lastQuizWasCorrect == true
+                              ? question.explanation
+                              : 'Quase. ${question.explanation}',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: controller.lastQuizWasCorrect == true
+                                ? LiaColors.greenSuccessText
+                                : LiaColors.amberText,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: controller.nextQuizQuestion,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Próxima pergunta'),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                'Este teste é educativo. Ele não pede senha, CPF, código real nem faz operação bancária.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: LiaColors.textMuted,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuizOption extends StatelessWidget {
+  const _QuizOption({
+    required this.text,
+    required this.selected,
+    required this.correct,
+    required this.disabled,
+    required this.onTap,
+  });
+
+  final String text;
+  final bool selected;
+  final bool correct;
+  final bool disabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = correct
+        ? LiaColors.greenSuccess
+        : selected
+        ? LiaColors.greenDark
+        : LiaColors.borderGray;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(LiaRadii.lg),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: correct
+                ? LiaColors.greenSuccessLight
+                : selected
+                ? LiaColors.greenPale
+                : Colors.white,
+            borderRadius: BorderRadius.circular(LiaRadii.lg),
+            border: Border.all(
+              color: borderColor,
+              width: selected || correct ? 2 : 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                correct
+                    ? Icons.check_circle_outline
+                    : selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: correct ? LiaColors.greenSuccess : LiaColors.greenDark,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  text,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LiaColors.textDark,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2869,23 +3378,30 @@ class _SavedItemCard extends StatelessWidget {
                   ),
                   child: Icon(config.$1, color: config.$3, size: 26),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: config.$2,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    config.$4,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: config.$3,
-                      letterSpacing: 0.04,
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: config.$2,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        config.$4,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: config.$3,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -2916,14 +3432,17 @@ class _SavedItemCard extends StatelessWidget {
                     size: 16,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    'Salvo durante o treino',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: LiaColors.textLightGray,
+                  Expanded(
+                    child: Text(
+                      'Salvo durante o treino',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: LiaColors.textLightGray,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

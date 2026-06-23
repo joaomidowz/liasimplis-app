@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lia_simplis/app_controller.dart';
 import 'package:lia_simplis/app_data.dart';
@@ -23,7 +24,9 @@ void main() {
       controller.go(AppScreen.home);
     }
     sw.stop();
-    print('CT-DES-01: ${sw.elapsedMilliseconds}ms para 20 ciclos de navegação');
+    debugPrint(
+      'CT-DES-01: ${sw.elapsedMilliseconds}ms para 20 ciclos de navegação',
+    );
     expect(sw.elapsedMilliseconds, lessThan(3000));
   });
 
@@ -39,7 +42,9 @@ void main() {
       controller.chooseAnotherScenario();
     }
     sw.stop();
-    print('CT-DES-02: ${sw.elapsedMilliseconds}ms para 30 trocas de cenário');
+    debugPrint(
+      'CT-DES-02: ${sw.elapsedMilliseconds}ms para 30 trocas de cenário',
+    );
     expect(sw.elapsedMilliseconds, lessThan(3000));
   });
 
@@ -58,7 +63,9 @@ void main() {
       controller.beginSimulation();
     }
     sw.stop();
-    print('CT-DES-05: ${sw.elapsedMilliseconds}ms para 50 ciclos save/load');
+    debugPrint(
+      'CT-DES-05: ${sw.elapsedMilliseconds}ms para 50 ciclos save/load',
+    );
     expect(sw.elapsedMilliseconds, lessThan(5000));
   });
 
@@ -72,7 +79,9 @@ void main() {
     controller.selectAnswer(controller.scenario.answers.first);
     controller.finishTraining();
     sw.stop();
-    print('CT-DES-06: ${sw.elapsedMilliseconds}ms para init + onboarding + 1 treino completo');
+    debugPrint(
+      'CT-DES-06: ${sw.elapsedMilliseconds}ms para init + onboarding + 1 treino completo',
+    );
     expect(sw.elapsedMilliseconds, lessThan(5000));
   });
 }

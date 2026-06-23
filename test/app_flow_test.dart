@@ -47,8 +47,9 @@ void main() {
 
     expect(find.text('O que você faria primeiro?'), findsOneWidget);
 
-    final safeAnswer = controller.scenario.answers
-        .firstWhere((a) => a.type == AnswerType.safe);
+    final safeAnswer = controller.scenario.answers.firstWhere(
+      (a) => a.type == AnswerType.safe,
+    );
     await tester.scrollUntilVisible(
       find.text(safeAnswer.label),
       200,

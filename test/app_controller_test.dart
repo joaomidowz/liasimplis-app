@@ -11,16 +11,21 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('inventário de conteúdo mantém paridade com o protótipo HTML', () {
-    expect(trainings, hasLength(2));
-    expect(trainings.expand((item) => item.scenarios), hasLength(15));
-    expect(dictionaryTerms, hasLength(5));
-    expect(deviceHelpItems, hasLength(4));
+  test('inventário de conteúdo foi expandido sem remover estruturas', () {
+    expect(trainings.length, greaterThanOrEqualTo(14));
+    expect(trainings.expand((item) => item.scenarios).length, greaterThan(35));
+    expect(dictionaryTerms.length, greaterThanOrEqualTo(45));
+    expect(deviceHelpItems.length, greaterThanOrEqualTo(20));
+    expect(faqItems.length, greaterThanOrEqualTo(30));
+    expect(quizQuestions.length, greaterThanOrEqualTo(25));
     for (final item in trainings.expand((training) => training.scenarios)) {
       expect(
         item.answers.map((answer) => answer.type).toSet(),
         AnswerType.values.toSet(),
       );
+    }
+    for (final training in trainings) {
+      expect(training.safetyNotice, contains('Simulação educativa'));
     }
   });
 
@@ -42,6 +47,7 @@ void main() {
 
       controller.finishTraining();
       expect(controller.screen, AppScreen.conclusion);
+      expect(controller.completedTrainings, contains(controller.training.id));
 
       expect(controller.completed, 1);
       expect(controller.protectedChoices, 2);
@@ -138,9 +144,7 @@ void main() {
     controller.beginSimulation();
     expect(controller.screen, AppScreen.simulation);
 
-    controller.selectAnswer(
-      const ScenarioAnswer(AnswerType.safe, 'Segura'),
-    );
+    controller.selectAnswer(const ScenarioAnswer(AnswerType.safe, 'Segura'));
     expect(controller.screen, AppScreen.feedbackRight);
 
     controller.continueFromWord();
@@ -155,16 +159,19 @@ void main() {
     expect(controller.screen, AppScreen.conclusion);
   });
 
-  test('onboarding inicia em start e completeOnboarding vai para home', () async {
-    final controller = AppController();
-    await controller.load();
-    expect(controller.screen, AppScreen.start);
+  test(
+    'onboarding inicia em start e completeOnboarding vai para home',
+    () async {
+      final controller = AppController();
+      await controller.load();
+      expect(controller.screen, AppScreen.start);
 
-    controller.completeOnboarding('Maria', 'Samsung');
-    expect(controller.screen, AppScreen.home);
-    expect(controller.name, 'Maria');
-    expect(controller.deviceBrand, 'Samsung');
-  });
+      controller.completeOnboarding('Maria', 'Samsung');
+      expect(controller.screen, AppScreen.home);
+      expect(controller.name, 'Maria');
+      expect(controller.deviceBrand, 'Samsung');
+    },
+  );
 
   test('onboarding rejeita nome vazio', () async {
     final controller = AppController();
@@ -209,6 +216,24 @@ void main() {
     expect(faqItems, isNotEmpty);
     expect(faqItems.first.question, isNotEmpty);
     expect(faqItems.first.answer, isNotEmpty);
+  });
+
+  test('quiz registra perguntas respondidas e acertos sem login', () async {
+    final controller = AppController();
+    await controller.load();
+
+    controller.startQuiz();
+    expect(controller.screen, AppScreen.quiz);
+    final first = controller.quizQuestion;
+
+    controller.answerQuiz(first.correctAnswerId);
+    expect(controller.lastQuizWasCorrect, isTrue);
+    expect(controller.answeredQuestions, contains(first.id));
+    expect(controller.quizCorrect, 1);
+
+    controller.nextQuizQuestion();
+    expect(controller.quizQuestion.id, isNot(first.id));
+    expect(controller.lastQuizAnswerId, isNull);
   });
 
   test('callSteps tem conteúdo', () {
